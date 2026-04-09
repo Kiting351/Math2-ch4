@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulateur Mathématiques 2ème Sciences</title>
+    
+    <!-- Tailwind CSS pour le design -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel pour compiler le JSX directement dans le navigateur -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        /* Petite animation pour l'apparition des contenus */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeIn {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-slate-50">
+    <!-- Le conteneur où React va s'injecter -->
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- ICONES VECTORIELLES (Remplacement de Lucide-React pour le mode autonome) ---
+        const Icon = ({ children, className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                {children}
+            </svg>
+        );
+        const BookOpen = ({ className }) => <Icon className={className}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></Icon>;
+        const Activity = ({ className }) => <Icon className={className}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></Icon>;
+        const CheckCircle = ({ className }) => <Icon className={className}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></Icon>;
+        const AlertTriangle = ({ className }) => <Icon className={className}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></Icon>;
+        const ArrowRight = ({ className }) => <Icon className={className}><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></Icon>;
+        const Layers = ({ className }) => <Icon className={className}><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 12 12 17 22 12"/><polyline points="2 17 12 22 22 17"/></Icon>;
+        const FileText = ({ className }) => <Icon className={className}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></Icon>;
+        const ChevronDown = ({ className }) => <Icon className={className}><polyline points="6 9 12 15 18 9"/></Icon>;
+        const ChevronUp = ({ className }) => <Icon className={className}><polyline points="18 15 12 9 6 15"/></Icon>;
+        const Lightbulb = ({ className }) => <Icon className={className}><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1.3.5 2.6 1.5 3.5.8.8 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></Icon>;
+
+        // --- COMPOSANTS DE LABORATOIRE SPÉCIFIQUES ---
+
+        const ParabolaLab = () => {
+        const [a, setA] = useState(1);
+        const [alpha, setAlpha] = useState(0);
+        const [beta, setBeta] = useState(0);
+
+        const generatePath = () => {
+            let path = "";
+            for (let x = -10; x <= 10; x += 0.1) {
+            const y = a * Math.pow((x - alpha), 2) + beta;
+            const svgX = (x * 15) + 150; 
+            const svgY = 150 - (y * 15); 
+            if (x === -10) path += `M ${svgX} ${svgY} `;
+            else path += `L ${svgX} ${svgY} `;
+            }
+            return path;
+        };
+
+        return (
+            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 md:gap-8">
+            <div className="flex-1 space-y-4 sm:space-y-6">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-800 flex items-center mb-2 sm:mb-4">
+                <Activity className="w-6 h-6 mr-2 text-blue-500 shrink-0" /> Laboratoire : Parabole
+                </h3>
+                <div className="bg-blue-50 p-3 sm:p-4 rounded-lg font-mono text-center text-lg sm:text-xl text-blue-900 mb-4 sm:mb-6 border border-blue-100 overflow-x-auto">
+                f(x) = <span className="font-bold">{a}</span>(x - <span className="font-bold">{alpha}</span>)² + <span className="font-bold">{beta}</span>
+                </div>
+                <div className="space-y-4 sm:space-y-4">
+                <div className="py-1">
+                    <label className="flex justify-between text-sm font-medium text-gray-700 mb-2">
+                    <span>Coefficient 'a' (Ouverture)</span><span className="font-bold">{a}</span>
+                    </label>
+                    <input type="range" min="-5" max="5" step="0.5" value={a} onChange={(e) => setA(parseFloat(e.target.value))} className="w-full h-3 sm:h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" />
+                </div>
+                <div className="py-1">
+                    <label className="flex justify-between text-sm font-medium text-gray-700 mb-2">
+                    <span>'α' (Translation Horizontale)</span><span className="font-bold">{alpha}</span>
+                    </label>
+                    <input type="range" min="-8" max="8" step="1" value={alpha} onChange={(e) => setAlpha(parseFloat(e.target.value))} className="w-full h-3 sm:h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" />
+                </div>
+                <div className="py-1">
+                    <label className="flex justify-between text-sm font-medium text-gray-700 mb-2">
+                    <span>'β' (Translation Verticale)</span><span className="font-bold">{beta}</span>
+                    </label>
+                    <input type="range" min="-8" max="8" step="1" value={beta} onChange={(e) => setBeta(parseFloat(e.target.value))} className="w-full h-3 sm:h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" />
+                </div>
+                </div>
+            </div>
+
+            <div className="w-full max-w-[300px] aspect-square bg-slate-50 border-2 border-slate-200 rounded-lg relative overflow-hidden shrink-0 mx-auto">
+                <svg viewBox="0 0 300 300" className="w-full h-full">
+                {[...Array(21)].map((_, i) => (
+                    <g key={i}>
+                    <line x1={0} y1={i * 15} x2={300} y2={i * 15} stroke="#e2e8f0" strokeWidth={i === 10 ? 2 : 1} />
+                    <line x1={i * 15} y1={0} x2={i * 15} y2={300} stroke="#e2e8f0" strokeWidth={i === 10 ? 2 : 1} />
+                    </g>
+                ))}
+                <line x1={150} y1={0} x2={150} y2={300} stroke="#64748b" strokeWidth="2" />
+                <line x1={0} y1={150} x2={300} y2={150} stroke="#64748b" strokeWidth="2" />
+                
+                {(alpha !== 0 || beta !== 0) && (
+                    <line x1={150} y1={150} x2={150 + (alpha * 15)} y2={150 - (beta * 15)} stroke="#ef4444" strokeWidth="2" strokeDasharray="4" />
+                )}
+                <circle cx={150 + (alpha * 15)} cy={150 - (beta * 15)} r="4" fill="#ef4444" />
+                <text x={150 + (alpha * 15) + 8} y={150 - (beta * 15) - 8} fill="#ef4444" className="text-xs font-bold">S</text>
+                <path d={generatePath()} fill="none" stroke="#3b82f6" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+            </div>
+            </div>
+        );
+        };
+
+        const HyperbolaLab = () => {
+        const [a, setA] = useState(2);
+        const [alpha, setAlpha] = useState(0);
+        const [beta, setBeta] = useState(0);
+
+        const generatePath = () => {
+            let d = "";
+            let isFirstPoint = true;
+            for (let x = -10; x <= 10; x += 0.1) {
+            if (Math.abs(x - alpha) < 0.1) { isFirstPoint = true; continue; }
+            const y = (a / (x - alpha)) + beta;
+            const svgX = (x * 15) + 150;
+            const svgY = 150 - (y * 15);
+            
+            if (svgY < -100 || svgY > 400) { isFirstPoint = true; continue; }
+            if (isFirstPoint) { d += `M ${svgX} ${svgY} `; isFirstPoint = false; } 
+            else { d += `L ${svgX} ${svgY} `; }
+            }
+            return d;
+        };
+
+        return (
+            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 md:gap-8">
+            <div className="flex-1 space-y-4 sm:space-y-6">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-800 flex items-center mb-2 sm:mb-4">
+                <Activity className="w-6 h-6 mr-2 text-indigo-500 shrink-0" /> Laboratoire : Hyperbole
+                </h3>
+                <div className="bg-indigo-50 p-3 sm:p-4 rounded-lg font-mono text-center text-lg sm:text-xl text-indigo-900 mb-4 sm:mb-6 border border-indigo-100 flex items-center justify-center overflow-x-auto">
+                f(x) =&nbsp;
+                <div className="inline-flex flex-col items-center">
+                    <span className="font-bold border-b-2 border-indigo-900 px-2">{a}</span>
+                    <span>x - <span className="font-bold">{alpha}</span></span>
+                </div>
+                &nbsp;+ <span className="font-bold ml-1">{beta}</span>
+                </div>
+                <div className="space-y-4 sm:space-y-4">
+                <div className="py-1">
+                    <label className="flex justify-between text-sm font-medium text-gray-700 mb-2">
+                    <span>Coefficient 'a' (Dilatation)</span><span className="font-bold">{a}</span>
+                    </label>
+                    <input type="range" min="-5" max="5" step="1" value={a} onChange={(e) => setA(parseFloat(e.target.value) || 1)} className="w-full h-3 sm:h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" />
+                </div>
+                <div className="py-1">
+                    <label className="flex justify-between text-sm font-medium text-gray-700 mb-2">
+                    <span>'α' (Asymptote verticale x = α)</span><span className="font-bold">{alpha}</span>
+                    </label>
+                    <input type="range" min="-8" max="8" step="1" value={alpha} onChange={(e) => setAlpha(parseFloat(e.target.value))} className="w-full h-3 sm:h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" />
+                </div>
+                <div className="py-1">
+                    <label className="flex justify-between text-sm font-medium text-gray-700 mb-2">
+                    <span>'β' (Asymptote horizontale y = β)</span><span className="font-bold">{beta}</span>
+                    </label>
+                    <input type="range" min="-8" max="8" step="1" value={beta} onChange={(e) => setBeta(parseFloat(e.target.value))} className="w-full h-3 sm:h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" />
+                </div>
+                </div>
+            </div>
+
+            <div className="w-full max-w-[300px] aspect-square bg-slate-50 border-2 border-slate-200 rounded-lg relative overflow-hidden shrink-0 mx-auto">
+                <svg viewBox="0 0 300 300" className="w-full h-full">
+                {[...Array(21)].map((_, i) => (
+                    <g key={i}>
+                    <line x1={0} y1={i * 15} x2={300} y2={i * 15} stroke="#e2e8f0" strokeWidth={i === 10 ? 2 : 1} />
+                    <line x1={i * 15} y1={0} x2={i * 15} y2={300} stroke="#e2e8f0" strokeWidth={i === 10 ? 2 : 1} />
+                    </g>
+                ))}
+                <line x1={150} y1={0} x2={150} y2={300} stroke="#64748b" strokeWidth="2" />
+                <line x1={0} y1={150} x2={300} y2={150} stroke="#64748b" strokeWidth="2" />
+                
+                <line x1={150 + (alpha * 15)} y1={0} x2={150 + (alpha * 15)} y2={300} stroke="#ef4444" strokeWidth="2" strokeDasharray="4" />
+                <line x1={0} y1={150 - (beta * 15)} x2={300} y2={150 - (beta * 15)} stroke="#ef4444" strokeWidth="2" strokeDasharray="4" />
+                <circle cx={150 + (alpha * 15)} cy={150 - (beta * 15)} r="4" fill="#ef4444" />
+                <text x={150 + (alpha * 15) + 8} y={150 - (beta * 15) - 8} fill="#ef4444" className="text-xs font-bold">ω</text>
+                <path d={generatePath()} fill="none" stroke="#6366f1" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+            </div>
+            </div>
+        );
+        };
+
+        const IntersectionLab = () => {
+        const [k, setK] = useState(2);
+        const f = (x) => Math.pow(x, 2) - 2;
+        
+        const generateParabola = () => {
+            let path = "";
+            for (let x = -10; x <= 10; x += 0.1) {
+            const y = f(x);
+            const svgX = (x * 15) + 150; 
+            const svgY = 150 - (y * 15); 
+            if (x === -10) path += `M ${svgX} ${svgY} `;
+            else path += `L ${svgX} ${svgY} `;
+            }
+            return path;
+        };
+
+        const getIntersections = () => {
+            const val = k + 2;
+            if (val < 0) return [];
+            if (val === 0) return [0];
+            return [-Math.sqrt(val), Math.sqrt(val)];
+        };
+
+        const intersections = getIntersections();
+
+        return (
+            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 md:gap-8">
+            <div className="flex-1 space-y-4 sm:space-y-6">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-800 flex items-center mb-2 sm:mb-4">
+                <Activity className="w-6 h-6 mr-2 text-green-500 shrink-0" /> Résolution : f(x) = k
+                </h3>
+                <p className="text-sm sm:text-base text-gray-600 mb-4">
+                Faites varier <strong>k</strong> pour déplacer la droite horizontale y = k et observer le nombre de solutions.
+                </p>
+                <div className="bg-green-50 p-3 sm:p-4 rounded-lg mb-4 sm:mb-6 border border-green-200 text-center">
+                <div className="text-base sm:text-lg text-green-900 font-mono mb-2">f(x) = <span className="font-bold">{k}</span></div>
+                <div className="font-bold text-sm sm:text-base text-green-700">
+                    {intersections.length === 0 && "Aucune solution (S = ∅)"}
+                    {intersections.length === 1 && `1 solution (x = 0)`}
+                    {intersections.length === 2 && `2 solutions (x₁ ≈ ${intersections[0].toFixed(1)}, x₂ ≈ ${intersections[1].toFixed(1)})`}
+                </div>
+                </div>
+                <div className="py-1">
+                <label className="flex justify-between text-sm font-medium text-gray-700 mb-2">
+                    <span>Valeur de k</span><span className="font-bold">{k}</span>
+                </label>
+                <input type="range" min="-5" max="5" step="1" value={k} onChange={(e) => setK(parseFloat(e.target.value))} className="w-full h-3 sm:h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" />
+                </div>
+            </div>
+
+            <div className="w-full max-w-[300px] aspect-square bg-slate-50 border-2 border-slate-200 rounded-lg relative overflow-hidden shrink-0 mx-auto">
+                <svg viewBox="0 0 300 300" className="w-full h-full">
+                {[...Array(21)].map((_, i) => (
+                    <g key={i}>
+                    <line x1={0} y1={i * 15} x2={300} y2={i * 15} stroke="#e2e8f0" strokeWidth={i === 10 ? 2 : 1} />
+                    <line x1={i * 15} y1={0} x2={i * 15} y2={300} stroke="#e2e8f0" strokeWidth={i === 10 ? 2 : 1} />
+                    </g>
+                ))}
+                <line x1={150} y1={0} x2={150} y2={300} stroke="#64748b" strokeWidth="2" />
+                <line x1={0} y1={150} x2={300} y2={150} stroke="#64748b" strokeWidth="2" />
+                <path d={generateParabola()} fill="none" stroke="#3b82f6" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                <line x1={0} y1={150 - (k * 15)} x2={300} y2={150 - (k * 15)} stroke="#10b981" strokeWidth="3" />
+                <text x={10} y={150 - (k * 15) - 8} fill="#10b981" className="text-sm font-bold">y = {k}</text>
+                {intersections.map((x, idx) => (
+                    <circle key={idx} cx={150 + (x * 15)} cy={150 - (k * 15)} r="5" fill="#10b981" stroke="#fff" strokeWidth="2" />
+                ))}
+                </svg>
+            </div>
+            </div>
+        );
+        };
+
+        // --- COMPOSANT EXERCICES ---
+        const ExerciseViewer = ({ exercises }) => {
+        const [openIndex, setOpenIndex] = useState(null);
+
+        return (
+            <div className="space-y-4 sm:space-y-6">
+            {exercises.map((exo, idx) => {
+                const isOpen = openIndex === idx;
+                return (
+                <div key={idx} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div className={`p-4 sm:p-5 border-b-2 ${exo.type === 'Activité' ? 'border-orange-200 bg-orange-50' : 'border-blue-200 bg-blue-50'}`}>
+                    <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+                        <h3 className={`font-bold text-base sm:text-lg ${exo.type === 'Activité' ? 'text-orange-800' : 'text-blue-800'}`}>
+                        {exo.type} : {exo.title}
+                        </h3>
+                    </div>
+                    <div className="mt-3 sm:mt-4 text-sm sm:text-base text-gray-800 leading-relaxed font-medium">
+                        {exo.statement}
+                    </div>
+                    </div>
+                    
+                    <div className="p-3 sm:p-4 bg-gray-50 flex justify-between items-center cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => setOpenIndex(isOpen ? null : idx)}>
+                    <span className="font-semibold text-xs sm:text-sm text-gray-700 flex items-center">
+                        <Lightbulb className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-yellow-500 shrink-0" />
+                        Correction Pédagogique Détaillée & Astuces
+                    </span>
+                    {isOpen ? <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 shrink-0"/> : <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 shrink-0"/>}
+                    </div>
+
+                    {isOpen && (
+                    <div className="p-4 sm:p-6 bg-white border-t border-gray-100 animate-fadeIn">
+                        <div className="prose prose-sm sm:prose-base prose-blue max-w-none text-gray-700 space-y-3 sm:space-y-4">
+                        {exo.correction}
+                        </div>
+                    </div>
+                    )}
+                </div>
+                );
+            })}
+            </div>
+        );
+        };
+
+        // --- DONNÉES PÉDAGOGIQUES COMPLÈTES (MODULES + EXERCICES PAGES 48-71) ---
+        const MODULES = [
+        {
+            id: 'parabole',
+            title: 'Les Paraboles (Forme Canonique)',
+            component: ParabolaLab,
+            summary: (
+            <div className="space-y-4 text-gray-800">
+                <h3 className="text-lg sm:text-xl font-bold text-blue-700">Fonction f(x) = a(x - α)² + β</h3>
+                <p>La courbe représentative est une <strong>parabole</strong>.</p>
+                <ul className="list-disc pl-5 space-y-2">
+                <li><strong>Sommet :</strong> Le point S(α, β).</li>
+                <li><strong>Axe de symétrie :</strong> La droite verticale d'équation x = α.</li>
+                <li><strong>Orientation :</strong> a &gt; 0 (vers le haut), a &lt; 0 (vers le bas).</li>
+                </ul>
+            </div>
+            ),
+            quiz: [
+            {
+                question: "Quel est le sommet de la parabole définie par f(x) = 3(x - 4)² + 2 ?",
+                options: ["S(-4, 2)", "S(4, 2)", "S(3, 2)", "S(4, -2)"],
+                correct: 1,
+                explanation: "La forme est a(x - α)² + β. Par identification : a=3, α=4, β=2. Le sommet est S(α, β) donc S(4, 2)."
+            },
+            {
+                question: "La fonction g(x) = -2(x + 1)² - 5 admet :",
+                options: ["Un minimum en -5", "Un maximum en -5", "Un minimum en 1", "Un maximum en -1"],
+                correct: 1,
+                explanation: "Ici a = -2 (négatif), la parabole est tournée vers le bas. Elle admet donc un point le plus haut : un maximum. Ce maximum est l'ordonnée du sommet (β), soit -5."
+            },
+            {
+                question: "Comment déterminer rapidement l'ordonnée du point d'intersection de la parabole d'équation f(x) = 2(x - 3)² - 5 avec l'axe des ordonnées ?",
+                options: ["C'est la valeur de β, soit -5", "C'est la valeur de α, soit 3", "Il faut calculer f(0) = 13", "Il faut résoudre f(x) = 0"],
+                correct: 2,
+                explanation: "Astuce classique : Tout point situé sur l'axe des ordonnées a pour abscisse x = 0. Il suffit de calculer l'image de 0 : f(0) = 2(0 - 3)² - 5 = 2(9) - 5 = 18 - 5 = 13."
+            },
+            {
+                question: "Si une parabole a pour équation f(x) = x² - 6x + 8, quelle est l'équation de son axe de symétrie ?",
+                options: ["x = -6", "x = 8", "x = 3", "y = 3"],
+                correct: 2,
+                explanation: "Astuce : L'abscisse du sommet (et donc l'axe de symétrie) se trouve avec la formule α = -b / (2a). Ici a=1 et b=-6. Donc α = -(-6) / (2*1) = 3. L'axe de symétrie est la droite verticale x = 3."
+            },
+            {
+                question: "Une parabole admet un minimum et son sommet est S(2, -1). Que peut-on déduire de son équation f(x) = a(x - α)² + β ?",
+                options: ["a > 0, α = 2, β = -1", "a < 0, α = 2, β = -1", "a > 0, α = -2, β = 1", "a < 0, α = -2, β = -1"],
+                correct: 0,
+                explanation: "Le mot 'minimum' signifie que la parabole est creuse (bras vers le haut), donc a > 0. Le sommet donne directement α = 2 et β = -1."
+            }
+            ],
+            exercises: [
+            {
+                type: "Activité",
+                title: "Passage à la forme canonique (Complétion du carré)",
+                statement: (
+                <div>
+                    Soit la fonction définie sur ℝ par <strong>f(x) = x² - 6x + 5</strong>.<br/>
+                    1. Montrer que f(x) peut s'écrire sous la forme f(x) = (x - 3)² - 4.<br/>
+                    2. En déduire les coordonnées du sommet de la parabole représentant f.
+                </div>
+                ),
+                correction: (
+                <div>
+                    <p className="font-bold text-blue-700 mb-2">Étape 1 : Astuce de la complétion du carré</p>
+                    <p><strong>Pourquoi fait-on cela ?</strong> L'objectif est de forcer l'apparition d'une identité remarquable du type (a - b)² = a² - 2ab + b².</p>
+                    <ul className="list-disc pl-5 mt-2 space-y-2">
+                    <li>On regarde le début de l'expression : <strong>x² - 6x</strong>.</li>
+                    <li>On sait que <strong>(x - 3)² = x² - 6x + 9</strong>.</li>
+                    <li>Donc, par soustraction, on peut dire que : <strong>x² - 6x = (x - 3)² - 9</strong>.</li>
+                    <li>On remplace cela dans l'expression initiale : <br/>
+                        f(x) = [ (x - 3)² - 9 ] + 5
+                    </li>
+                    <li>On simplifie la fin : -9 + 5 = -4.</li>
+                    <li><strong>Résultat final :</strong> f(x) = (x - 3)² - 4.</li>
+                    </ul>
+                    <p className="font-bold text-blue-700 mt-4 mb-2">Étape 2 : Déduction du sommet</p>
+                    <p><strong>Raisonnement :</strong> On compare notre résultat f(x) = (x - 3)² - 4 avec la forme théorique f(x) = a(x - α)² + β.</p>
+                    <ul className="list-disc pl-5">
+                    <li>a = 1</li>
+                    <li>α = 3 <em>(Attention, la formule dit "- α" et on a "- 3", donc α est positif)</em></li>
+                    <li>β = -4</li>
+                    </ul>
+                    <p className="mt-2 bg-green-50 p-2 border-l-4 border-green-500">Le sommet de la parabole est donc le point <strong>S(3, -4)</strong>.</p>
+                </div>
+                )
+            },
+            {
+                type: "Exercice",
+                title: "Retrouver l'expression de la fonction à partir du graphique",
+                statement: (
+                <div>
+                    Une parabole P admet pour sommet le point <strong>S(2, 3)</strong> et passe par le point <strong>A(1, 5)</strong>.<br/>
+                    Déterminer l'expression algébrique de la fonction f représentée par cette parabole.
+                </div>
+                ),
+                correction: (
+                <div>
+                    <p className="font-bold text-blue-700 mb-2">Étape 1 : Utilisation du sommet</p>
+                    <p>Puisque la courbe est une parabole, on sait que son équation s'écrit <strong>f(x) = a(x - α)² + β</strong>.</p>
+                    <p>L'énoncé nous donne le sommet S(2, 3). On remplace donc α par 2 et β par 3 :</p>
+                    <p className="bg-gray-100 p-2 text-center rounded">f(x) = a(x - 2)² + 3</p>
+                    <p className="text-sm italic mt-1 text-gray-500">Il ne reste plus qu'à trouver la valeur du coefficient 'a'.</p>
+
+                    <p className="font-bold text-blue-700 mt-4 mb-2">Étape 2 : Utilisation du point de passage</p>
+                    <p><strong>Que signifie "la parabole passe par le point A(1, 5)" ?</strong><br/>
+                    Cela signifie mathématiquement que l'image de l'abscisse (1) est égale à l'ordonnée (5). Autrement dit : <strong>f(1) = 5</strong>.</p>
+                    
+                    <p>Remplaçons x par 1 dans notre équation provisoire :</p>
+                    <ul className="list-none pl-5 space-y-2 mt-2 font-mono">
+                    <li>a(1 - 2)² + 3 = 5</li>
+                    <li>a(-1)² + 3 = 5</li>
+                    <li>a(1) + 3 = 5</li>
+                    <li>a = 5 - 3</li>
+                    <li><strong>a = 2</strong></li>
+                    </ul>
+                    <p className="mt-4 bg-green-50 p-2 border-l-4 border-green-500">
+                    L'expression finale de la fonction est : <strong>f(x) = 2(x - 2)² + 3</strong>.
+                    </p>
+                </div>
+                )
+            },
+            {
+                type: "Exercice",
+                title: "Intersection entre une droite et une parabole",
+                statement: (
+                <div>
+                    Soit la parabole P d'équation <strong>y = x² - 4x + 3</strong> et la droite D d'équation <strong>y = -x + 1</strong>.<br/>
+                    Déterminer par le calcul les coordonnées des points d'intersection entre P et D.
+                </div>
+                ),
+                correction: (
+                <div>
+                    <p className="font-bold text-blue-700 mb-2">Astuce : L'égalité des ordonnées</p>
+                    <p>Un point d'intersection appartient à la fois à P et à D. Ses coordonnées (x, y) vérifient donc les deux équations en même temps. Il faut donc <strong>égaler les deux expressions</strong> :</p>
+                    <div className="bg-gray-100 p-3 rounded font-mono text-center">
+                    x² - 4x + 3 = -x + 1
+                    </div>
+                    
+                    <p className="font-bold text-blue-700 mt-4 mb-2">Étape 1 : Résolution de l'équation du second degré</p>
+                    <p>On ramène tout du même côté pour avoir une équation du type ax² + bx + c = 0 :</p>
+                    <ul className="list-disc pl-5 mt-2">
+                    <li>x² - 4x + 3 + x - 1 = 0</li>
+                    <li><strong>x² - 3x + 2 = 0</strong></li>
+                    </ul>
+                    <p className="mt-2">On calcule le discriminant Δ (Delta) : Δ = b² - 4ac = (-3)² - 4(1)(2) = 9 - 8 = 1.<br/>
+                    Δ &gt; 0, il y a deux solutions pour x :</p>
+                    <ul className="list-disc pl-5">
+                    <li>x₁ = (3 - 1) / 2 = 1</li>
+                    <li>x₂ = (3 + 1) / 2 = 2</li>
+                    </ul>
+
+                    <p className="font-bold text-blue-700 mt-4 mb-2">Étape 2 : Calcul des ordonnées (y)</p>
+                    <p>Pour trouver les points complets, on remplace les x trouvés dans l'une des équations (choisissez la plus simple, celle de la droite D : y = -x + 1) :</p>
+                    <ul className="list-disc pl-5">
+                    <li>Pour x₁ = 1 : y₁ = -1 + 1 = 0. Le premier point est <strong>A(1, 0)</strong>.</li>
+                    <li>Pour x₂ = 2 : y₂ = -2 + 1 = -1. Le deuxième point est <strong>B(2, -1)</strong>.</li>
+                    </ul>
+                    <p className="mt-2 bg-green-50 p-2 border-l-4 border-green-500">
+                    Les points d'intersection sont A(1, 0) et B(2, -1).
+                    </p>
+                </div>
+                )
+            },
+            {
+                type: "Problème",
+                title: "Optimisation géométrique (L'enclos maximal)",
+                statement: (
+                <div>
+                    Un fermier dispose de 40 mètres de grillage. Il souhaite construire un enclos rectangulaire adossé à un mur existant (le mur forme l'un des côtés du rectangle, il ne nécessite pas de grillage).<br/>
+                    Quelles dimensions doit-il choisir pour que l'aire de l'enclos soit maximale ?
+                </div>
+                ),
+                correction: (
+                <div>
+                    <p className="font-bold text-blue-700 mb-2">Étape 1 : Modélisation mathématique</p>
+                    <p>Soit <strong>x</strong> la largeur de l'enclos et <strong>y</strong> sa longueur (le côté parallèle au mur).<br/>
+                    La longueur totale du grillage utilisé est : <strong>2x + y = 40</strong>.<br/>
+                    On peut donc exprimer y en fonction de x : <strong>y = 40 - 2x</strong>.</p>
+
+                    <p className="font-bold text-blue-700 mt-4 mb-2">Étape 2 : L'expression de l'Aire</p>
+                    <p>L'aire du rectangle est A = largeur × longueur = x × y.<br/>
+                    En remplaçant y, on obtient la fonction Aire dépendant uniquement de x :</p>
+                    <div className="bg-gray-100 p-2 text-center rounded font-mono">
+                    A(x) = x(40 - 2x) = -2x² + 40x
+                    </div>
+
+                    <p className="font-bold text-blue-700 mt-4 mb-2">Étape 3 : Recherche du maximum (Astuce du Sommet)</p>
+                    <p>L'expression A(x) = -2x² + 40x est un polynôme du second degré (a = -2). Puisque a &lt; 0, la parabole est tournée vers le bas : elle admet donc un <strong>maximum</strong>, atteint en son sommet S(α, β).</p>
+                    <p>On utilise la formule de l'abscisse du sommet : <strong>α = -b / 2a</strong>.</p>
+                    <ul className="list-disc pl-5">
+                    <li>Ici, a = -2 et b = 40.</li>
+                    <li>α = -40 / (2 × -2) = -40 / -4 = <strong>10</strong>.</li>
+                    </ul>
+                    <p>Donc la largeur idéale est x = 10 m.<br/>
+                    On en déduit la longueur y = 40 - 2(10) = 20 m.</p>
+                    <p className="mt-4 bg-green-50 p-2 border-l-4 border-green-500">
+                    Pour obtenir l'aire maximale (qui sera de 200 m²), le fermier doit choisir une largeur de 10m et une longueur de 20m.
+                    </p>
+                </div>
+                )
+            }
+            ]
+        },
+        {
+            id: 'hyperbole',
+            title: 'Les Hyperboles (1/x)',
+            component: HyperbolaLab,
+            summary: (
+            <div className="space-y-4 text-gray-800">
+                <h3 className="text-lg sm:text-xl font-bold text-indigo-700">Fonction f(x) = a / (x - α) + β</h3>
+                <p>La courbe représentative est une <strong>hyperbole</strong>.</p>
+                <ul className="list-disc pl-5 space-y-2">
+                <li><strong>Domaine de définition :</strong> ℝ \ &#123;α&#125;.</li>
+                <li><strong>Centre de symétrie :</strong> Le point ω(α, β).</li>
+                </ul>
+            </div>
+            ),
+            quiz: [
+            {
+                question: "Quelles sont les asymptotes de la fonction h(x) = 4 / (x - 3) + 1 ?",
+                options: ["x = -3 et y = 1", "x = 3 et y = -1", "x = 3 et y = 1", "x = 1 et y = 3"],
+                correct: 2,
+                explanation: "La forme est a / (x - α) + β. Ici α = 3 et β = 1. Asymptotes : x = 3 et y = 1."
+            },
+            {
+                question: "Quel est l'ensemble de définition de la fonction f(x) = -2 / (x + 5) - 3 ?",
+                options: ["ℝ \\ {-5}", "ℝ \\ {5}", "ℝ \\ {-3}", "ℝ"],
+                correct: 0,
+                explanation: "Le dénominateur (x + 5) ne doit pas être égal à zéro. Donc x ≠ -5. L'ensemble de définition est ℝ privé de -5."
+            },
+            {
+                question: "Quel est le centre de symétrie (ω) de l'hyperbole d'équation f(x) = 3 / (x + 1) - 2 ?",
+                options: ["ω(1, -2)", "ω(1, 2)", "ω(-1, 2)", "ω(-1, -2)"],
+                correct: 3,
+                explanation: "Astuce : Le centre de symétrie de l'hyperbole est le point d'intersection de ses deux asymptotes. Les asymptotes sont x = -1 et y = -2, donc le centre est ω(-1, -2)."
+            },
+            {
+                question: "Combien de fois l'hyperbole d'équation f(x) = 1 / (x - 2) + 3 coupe-t-elle son asymptote horizontale d'équation y = 3 ?",
+                options: ["0 fois", "1 fois", "2 fois", "Une infinité de fois"],
+                correct: 0,
+                explanation: "Astuce incontournable : Une courbe représentative d'une fonction homographique (hyperbole) s'approche indéfiniment de ses asymptotes, mais ne les coupe JAMAIS."
+            },
+            {
+                question: "Comment déduire l'asymptote horizontale de la fonction homographique f(x) = (2x + 1) / (x - 3) à partir de sa forme globale ?",
+                options: ["y = -3", "y = 2", "y = 1", "y = -1/3"],
+                correct: 1,
+                explanation: "Astuce de calcul : Pour une fonction sous la forme (ax + b) / (cx + d), l'asymptote horizontale s'obtient en faisant le rapport des coefficients devant 'x'. Ici y = a/c = 2/1 = 2."
+            }
+            ],
+            exercises: [
+            {
+                type: "Activité",
+                title: "Fonction homographique : Réduction au même dénominateur",
+                statement: (
+                <div>
+                    Soit la fonction f définie sur ℝ \ &#123;-2&#125; par <strong>f(x) = (3x + 10) / (x + 2)</strong>.<br/>
+                    1. Déterminer les réels a et b tels que f(x) = a + (b / (x + 2)).<br/>
+                    2. En déduire les coordonnées du centre de symétrie ω de la courbe.
+                </div>
+                ),
+                correction: (
+                <div>
+                    <p className="font-bold text-indigo-700 mb-2">Étape 1 : L'astuce d'identification</p>
+                    <p><strong>Méthode recommandée en 2ème Sciences :</strong> Forcer l'apparition du dénominateur (x+2) au numérateur.</p>
+                    <ul className="list-disc pl-5 mt-2 space-y-2">
+                    <li>Le numérateur est 3x + 10. On veut faire apparaitre "3(x + 2)".</li>
+                    <li>Or, 3(x + 2) = 3x + 6.</li>
+                    <li>Comment passer de 3x + 6 au vrai numérateur 3x + 10 ? Il faut ajouter 4.</li>
+                    <li>On écrit donc : 3x + 10 = 3(x + 2) + 4.</li>
+                    </ul>
+                    <p className="mt-2">On remplace dans la fraction :</p>
+                    <div className="bg-gray-100 p-3 rounded font-mono text-center">
+                    f(x) = [ 3(x + 2) + 4 ] / (x + 2)<br/>
+                    f(x) = 3(x + 2)/(x + 2) + 4/(x + 2)<br/>
+                    f(x) = 3 + 4/(x + 2)
+                    </div>
+                    <p className="mt-2">Par identification, on a <strong>a = 3</strong> et <strong>b = 4</strong>.</p>
+
+                    <p className="font-bold text-indigo-700 mt-4 mb-2">Étape 2 : Centre de symétrie et asymptotes</p>
+                    <p>La fonction est maintenant écrite sous la forme de référence : f(x) = β + a/(x - α).</p>
+                    <p>Ici, <strong>β = 3</strong> (asymptote horizontale y = 3) et <strong>α = -2</strong> (asymptote verticale x = -2).</p>
+                    <p className="mt-2 bg-green-50 p-2 border-l-4 border-green-500">
+                    Le centre de symétrie de l'hyperbole est le point d'intersection des asymptotes : <strong>ω(-2, 3)</strong>.
+                    </p>
+                </div>
+                )
+            },
+            {
+                type: "Exercice",
+                title: "Position relative de l'Hyperbole et de son Asymptote",
+                statement: (
+                <div>
+                    Soit la fonction définie par <strong>f(x) = 2 - 5/(x - 1)</strong>. Sa courbe représentative est (H).<br/>
+                    Étudier la position relative de (H) par rapport à son asymptote horizontale d'équation y = 2.
+                </div>
+                ),
+                correction: (
+                <div>
+                    <p className="font-bold text-indigo-700 mb-2">Astuce Pédagogique Fondamentale</p>
+                    <p>Pour étudier la position relative de two courbes (ou d'une courbe et d'une droite), on ne trace pas au hasard ! Il faut <strong>toujours étudier le signe de leur différence</strong>.</p>
+                    
+                    <p className="font-bold text-indigo-700 mt-4 mb-2">Étape 1 : Calculer la différence f(x) - y</p>
+                    <p>Soit d(x) = f(x) - y = [ 2 - 5/(x - 1) ] - 2.</p>
+                    <p>Les "2" s'annulent. Il reste : <strong>d(x) = -5 / (x - 1)</strong>.</p>
+
+                    <p className="font-bold text-indigo-700 mt-4 mb-2">Étape 2 : Tableau de signe</p>
+                    <p>Le signe de d(x) dépend du signe du dénominateur (x - 1), car le numérateur est constant et strictement négatif (-5).</p>
+                    <ul className="list-disc pl-5 mt-2 space-y-3">
+                    <li>
+                        <strong>Si x &gt; 1 :</strong> (x - 1) est positif. Donc -5 / (positif) = Négatif.<br/>
+                        <em>d(x) &lt; 0 signifie que f(x) &lt; y. La courbe (H) est <strong>en dessous</strong> de l'asymptote.</em>
+                    </li>
+                    <li>
+                        <strong>Si x &lt; 1 :</strong> (x - 1) est négatif. Donc -5 / (négatif) = Positif.<br/>
+                        <em>d(x) &gt; 0 signifie que f(x) &gt; y. La courbe (H) est <strong>au-dessus</strong> de l'asymptote.</em>
+                    </li>
+                    </ul>
+                    <p className="mt-4 bg-green-50 p-2 border-l-4 border-green-500 text-sm">
+                    Note : On remarque que la courbe change de côté de l'asymptote horizontale précisément au niveau de la valeur interdite (x=1), ce qui est typique des hyperboles !
+                    </p>
+                </div>
+                )
+            },
+            {
+                type: "Exercice",
+                title: "Déterminer l'équation avec le centre de symétrie",
+                statement: (
+                <div>
+                    Déterminer l'expression de la fonction f dont la courbe représentative est une hyperbole de centre de symétrie <strong>ω(-1, 4)</strong> et passant par l'origine du repère <strong>O(0, 0)</strong>.
+                </div>
+                ),
+                correction: (
+                <div>
+                    <p className="font-bold text-indigo-700 mb-2">Étape 1 : Le squelette de l'hyperbole</p>
+                    <p>L'énoncé indique une hyperbole. Sa forme est : f(x) = a / (x - α) + β.</p>
+                    <p>Le centre de symétrie est toujours le point ω(α, β). On nous donne ω(-1, 4). On remplace donc directement :</p>
+                    <ul className="list-disc pl-5">
+                    <li>α = -1</li>
+                    <li>β = 4</li>
+                    </ul>
+                    <div className="bg-gray-100 p-2 text-center rounded font-mono mt-2">
+                    f(x) = a / (x + 1) + 4
+                    </div>
+
+                    <p className="font-bold text-indigo-700 mt-4 mb-2">Étape 2 : Utiliser le point de passage</p>
+                    <p>La courbe passe par l'origine O(0, 0). Cela se traduit par : <strong>f(0) = 0</strong>.</p>
+                    <p>On remplace x par 0 dans notre équation provisoire pour trouver 'a' :</p>
+                    <ul className="list-none pl-5 font-mono mt-2 space-y-1">
+                    <li>a / (0 + 1) + 4 = 0</li>
+                    <li>a / 1 + 4 = 0</li>
+                    <li>a = -4</li>
+                    </ul>
+                    <p className="mt-4 bg-green-50 p-2 border-l-4 border-green-500">
+                    L'expression finale de la fonction est : <strong>f(x) = -4 / (x + 1) + 4</strong>.
+                    </p>
+                </div>
+                )
+            }
+            ]
+        },
+        {
+            id: 'lecture',
+            title: 'Lecture Graphique f(x)=k',
+            component: IntersectionLab,
+            summary: (
+            <div className="space-y-4 text-gray-800">
+                <h3 className="text-lg sm:text-xl font-bold text-green-700">Résolution Graphique d'Équations</h3>
+                <p>Les solutions de <strong>f(x) = k</strong> sont les <strong>abscisses</strong> des points d'intersection entre la courbe de f et la droite y = k.</p>
+            </div>
+            ),
+            quiz: [
+            {
+                question: "Si la courbe d'une fonction ne coupe pas du tout l'axe des abscisses, que dire de l'équation f(x) = 0 ?",
+                options: ["Elle admet 1 solution", "Elle admet une infinité de solutions", "L'équation est fausse", "Elle n'admet aucune solution (S = ∅)"],
+                correct: 3,
+                explanation: "L'axe des abscisses correspond à la droite d'équation y = 0. S'il n'y a pas d'intersection, il n'y a pas de solution."
+            },
+            {
+                question: "La droite y = 4 coupe une parabole en deux points A(-2, 4) et B(3, 4). Quelles sont les solutions de f(x) = 4 ?",
+                options: ["S = {-2, 3}", "S = {4}", "S = {-2, 4}", "S = {-2, 3, 4}"],
+                correct: 0,
+                explanation: "Les solutions de l'équation f(x) = 4 sont les abscisses (les x) des points d'intersection. Les points sont A et B, leurs abscisses respectives sont -2 et 3."
+            },
+            {
+                question: "Graphiquement, à quoi correspondent les solutions de l'inéquation f(x) < 2 ?",
+                options: ["Aux ordonnées des points sous la droite y=2", "Aux abscisses des points situés strictement en dessous de la droite y = 2", "Aux abscisses des points à gauche de x = 2", "Aux abscisses des points d'intersection avec y = 2"],
+                correct: 1,
+                explanation: "Astuce : \"f(x)\" représente la hauteur de la courbe (les y). Dire \"f(x) < 2\" signifie qu'on cherche les zones où la courbe est \"plus basse\" que la ligne horizontale d'altitude 2. On lit ensuite les abscisses de ces zones."
+            },
+            {
+                question: "Astuce de lecture : Si vous remarquez que la courbe de la fonction est parfaitement symétrique par rapport à l'axe des ordonnées (l'axe vertical), alors la fonction est :",
+                options: ["Paire", "Impaire", "Constante", "Une Hyperbole"],
+                correct: 0,
+                explanation: "C'est une propriété graphique fondamentale : Une fonction paire a sa courbe symétrique par rapport à l'axe des ordonnées. (Cela signifie que f(-x) = f(x))."
+            },
+            {
+                question: "Si on trace la droite horizontale y = -1 et qu'elle ne coupe JAMAIS la courbe représentative de la fonction f, on peut affirmer que :",
+                options: ["-1 est la racine de la fonction", "L'image de -1 n'existe pas", "-1 n'admet aucun antécédent par f", "-1 est le minimum de f"],
+                correct: 2,
+                explanation: "Chercher les antécédents d'un nombre 'k', c'est chercher les points d'intersection de la courbe avec la droite y = k. S'il n'y a pas d'intersection, alors 'k' (ici -1) n'a pas d'antécédent."
+            }
+            ],
+            exercises: [
+            {
+                type: "Exercice",
+                title: "Discussion paramétrique (Le fameux paramètre 'm')",
+                statement: (
+                <div>
+                    Soit f(x) = (x - 2)² - 3. Sa courbe représentative est une parabole.<br/>
+                    Discuter graphiquement, suivant les valeurs du paramètre réel <strong>m</strong>, le nombre de solutions de l'équation <strong>f(x) = m</strong>.
+                </div>
+                ),
+                correction: (
+                <div>
+                    <p className="font-bold text-green-700 mb-2">Astuce : Le "balayage" horizontal</p>
+                    <p>Résoudre f(x) = m, c'est compter combien de fois la courbe de f croise la ligne droite horizontale y = m. Imaginez une règle posée à l'horizontale que vous faites monter de bas en haut (de -∞ à +∞).</p>
+                    
+                    <p className="font-bold text-green-700 mt-4 mb-2">Étape 1 : Point critique de la parabole</p>
+                    <p>La fonction f(x) = (x - 2)² - 3 a pour sommet S(2, -3) et elle est tournée vers le haut (U). Le point le plus bas de la courbe est donc à la hauteur <strong>y = -3</strong>.</p>
+
+                    <p className="font-bold text-green-700 mt-4 mb-2">Étape 2 : La discussion</p>
+                    <ul className="space-y-3 mt-2">
+                    <li className="bg-red-50 p-2 rounded border border-red-200">
+                        <strong>Si m &lt; -3 :</strong> La droite horizontale est sous la parabole. Pas d'intersection.<br/>
+                        <span className="text-red-700 font-bold">Conclusion : L'équation n'a aucune solution.</span>
+                    </li>
+                    <li className="bg-blue-50 p-2 rounded border border-blue-200">
+                        <strong>Si m = -3 :</strong> La droite touche exactement le bas de la parabole (le sommet).<br/>
+                        <span className="text-blue-700 font-bold">Conclusion : 1 seule solution (qui est x = 2).</span>
+                    </li>
+                    <li className="bg-green-50 p-2 rounded border border-green-200">
+                        <strong>Si m &gt; -3 :</strong> La droite coupe les deux "branches" de la parabole.<br/>
+                        <span className="text-green-700 font-bold">Conclusion : 2 solutions distinctes.</span>
+                    </li>
+                    </ul>
+                </div>
+                )
+            },
+            {
+                type: "Activité",
+                title: "Résolution graphique d'inéquations f(x) ≥ g(x)",
+                statement: (
+                <div>
+                    Soit (Cf) la parabole d'équation f(x) = x² et (Cg) la droite d'équation g(x) = 2x + 3.<br/>
+                    On donne (ou on lit sur le graphique) que les points d'intersection entre (Cf) et (Cg) sont A(-1, 1) et B(3, 9).<br/>
+                    Résoudre graphiquement l'inéquation <strong>f(x) ≤ g(x)</strong>.
+                </div>
+                ),
+                correction: (
+                <div>
+                    <p className="font-bold text-green-700 mb-2">Traduction géométrique de l'inéquation</p>
+                    <p><strong>Astuce clé :</strong> L'inégalité "≤" signifie <em>"est en dessous ou au même niveau"</em>. <br/>
+                    On cherche donc les abscisses (les x) pour lesquelles la courbe (Cf) est <strong>en dessous</strong> de la droite (Cg).</p>
+
+                    <p className="font-bold text-green-700 mt-4 mb-2">Étape 1 : Localiser les zones sur le graphique</p>
+                    <p>La parabole descend puis remonte. La droite la coupe en x=-1 et x=3. Entre ces deux points, le "ventre" de la parabole "pend" en dessous de la droite.</p>
+
+                    <p className="font-bold text-green-700 mt-4 mb-2">Étape 2 : Lecture sur l'axe des abscisses (axe horizontal)</p>
+                    <p>La zone où la parabole est sous la droite commence exactement en x = -1 et se termine exactement en x = 3. Comme le symbole est "≤" (inférieur OU égal), on inclut les bornes.</p>
+                    
+                    <p className="mt-4 bg-green-50 p-2 border-l-4 border-green-500 font-bold">
+                    L'ensemble des solutions est l'intervalle S = [-1, 3].
+                    </p>
+                </div>
+                )
+            },
+            {
+                type: "Exercice",
+                title: "Exploiter la Parité et la Symétrie",
+                statement: (
+                <div>
+                    Une fonction f est définie sur l'intervalle [-4, 4]. On sait que f est <strong>impaire</strong>.<br/>
+                    Le graphique montre que sur l'intervalle [0, 4], la fonction est croissante de f(0)=0 jusqu'à f(4)=5.<br/>
+                    Déduire, sans tracer, le sens de variation de f sur [-4, 0] ainsi que la valeur de f(-4).
+                </div>
+                ),
+                correction: (
+                <div>
+                    <p className="font-bold text-green-700 mb-2">Rappel de cours essentiel</p>
+                    <p>Une fonction est <strong>impaire</strong> si pour tout x du domaine, f(-x) = -f(x).<br/>
+                    Graphiquement, cela signifie que sa courbe admet <strong>l'origine du repère O(0,0) comme centre de symétrie</strong>.</p>
+
+                    <p className="font-bold text-green-700 mt-4 mb-2">Calcul de f(-4)</p>
+                    <p>Par définition : f(-4) = -f(4). Comme l'énoncé donne f(4) = 5, on déduit immédiatement :</p>
+                    <div className="bg-gray-100 p-2 text-center rounded font-mono">f(-4) = -5</div>
+
+                    <p className="font-bold text-green-700 mt-4 mb-2">Sens de variation (La règle d'or)</p>
+                    <p><strong>Astuce :</strong> La symétrie centrale (fonction impaire) <em>conserve</em> le sens de variation. La symétrie axiale (fonction paire) <em>inverse</em> le sens de variation.</p>
+                    <p>Puisque f est impaire et croissante sur les x positifs [0, 4], elle conserve ce comportement et sera également <strong>croissante</strong> sur les x négatifs [-4, 0].</p>
+                    <p className="text-sm italic text-gray-600 mt-1">(Imaginez une courbe qui monte de gauche à droite, passant par zéro, elle continue de monter !)</p>
+                </div>
+                )
+            }
+            ]
+        }
+        ];
+
+        // --- COMPOSANT QCM ---
+        const Quiz = ({ questions }) => {
+        const [currentQ, setCurrentQ] = useState(0);
+        const [selectedOpt, setSelectedOpt] = useState(null);
+        const [showExplanation, setShowExplanation] = useState(false);
+
+        useEffect(() => { setCurrentQ(0); setSelectedOpt(null); setShowExplanation(false); }, [questions]);
+
+        const handleSelect = (idx) => {
+            if (showExplanation) return;
+            setSelectedOpt(idx); setShowExplanation(true);
+        };
+
+        const nextQuestion = () => {
+            setCurrentQ((prev) => (prev + 1) % questions.length);
+            setSelectedOpt(null); setShowExplanation(false);
+        };
+
+        const q = questions[currentQ];
+        const isCorrect = selectedOpt === q.correct;
+
+        return (
+            <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 max-w-2xl mx-auto">
+            <div className="flex justify-between text-sm text-gray-500 mb-4">
+                <span>Question {currentQ + 1} / {questions.length}</span>
+            </div>
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 sm:mb-6">{q.question}</h3>
+            <div className="space-y-2 sm:space-y-3">
+                {q.options.map((opt, idx) => {
+                let bgClass = "bg-gray-50 border-gray-200 hover:bg-blue-50 cursor-pointer";
+                if (showExplanation) {
+                    if (idx === q.correct) bgClass = "bg-green-100 border-green-500 text-green-800 font-bold";
+                    else if (idx === selectedOpt) bgClass = "bg-red-100 border-red-500 text-red-800 line-through";
+                    else bgClass = "bg-gray-50 opacity-50 cursor-not-allowed";
+                }
+                return (
+                    <div key={idx} onClick={() => handleSelect(idx)} className={`p-3 sm:p-4 rounded-lg border-2 transition-all ${bgClass} text-sm sm:text-base`}>
+                    {opt}
+                    </div>
+                );
+                })}
+            </div>
+            {showExplanation && (
+                <div className={`mt-4 sm:mt-6 p-4 rounded-lg border-l-4 ${isCorrect ? 'bg-green-50 border-green-500' : 'bg-red-50 border-red-500'}`}>
+                <h4 className="font-bold flex items-center mb-2 text-sm sm:text-base">
+                    {isCorrect ? <CheckCircle className="w-5 h-5 mr-2 text-green-600 shrink-0"/> : <AlertTriangle className="w-5 h-5 mr-2 text-red-600 shrink-0"/>}
+                    {isCorrect ? 'Excellente réponse !' : 'Oups, regardons cela ensemble.'}
+                </h4>
+                <p className="text-sm sm:text-base text-gray-700">{q.explanation}</p>
+                <button onClick={nextQuestion} className="mt-4 flex items-center text-blue-600 font-medium hover:text-blue-800 text-sm sm:text-base">
+                    Question suivante <ArrowRight className="w-4 h-4 ml-1 shrink-0"/>
+                </button>
+                </div>
+            )}
+            </div>
+        );
+        };
+
+        // --- APP PRINCIPALE ---
+        function App() {
+        const [activeModuleId, setActiveModuleId] = useState(MODULES[0].id);
+        const [activeTab, setActiveTab] = useState('labo');
+        
+        const currentModule = MODULES.find(m => m.id === activeModuleId);
+        const LabComponent = currentModule.component;
+
+        return (
+            <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
+            <header className="bg-blue-700 text-white shadow-md">
+                <div className="max-w-5xl mx-auto px-4 py-4 sm:py-6">
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Maths 2ème Sciences</h1>
+                <p className="text-blue-200 mt-1 text-xs sm:text-sm md:text-base">Chapitre 4 : Fonctions de référence - Simulateur interactif</p>
+                </div>
+            </header>
+
+            <main className="max-w-5xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
+                
+                {/* Sélecteur de Module */}
+                <div className="mb-6 sm:mb-8">
+                <h2 className="text-xs sm:text-sm font-bold text-gray-500 uppercase tracking-wider mb-3 flex items-center">
+                    <Layers className="w-4 h-4 mr-2 shrink-0" />
+                    Choisir une notion :
+                </h2>
+                <div className="flex flex-col sm:flex-row flex-wrap gap-2">
+                    {MODULES.map(m => (
+                    <button 
+                        key={m.id}
+                        onClick={() => { setActiveModuleId(m.id); setActiveTab('labo'); }}
+                        className={`w-full sm:w-auto justify-center px-4 py-3 sm:py-2 rounded-lg text-sm font-medium transition-all ${
+                        activeModuleId === m.id 
+                            ? 'bg-blue-600 text-white shadow-md' 
+                            : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                        }`}
+                    >
+                        {m.title}
+                    </button>
+                    ))}
+                </div>
+                </div>
+
+                {/* Navigation Interne */}
+                <div className="flex flex-col sm:flex-row flex-wrap gap-2 mb-6 sm:mb-8 bg-white p-2 rounded-xl shadow-sm border border-gray-200 w-full sm:w-auto">
+                <button 
+                    onClick={() => setActiveTab('cours')}
+                    className={`w-full sm:w-auto justify-center flex items-center px-4 py-3 sm:py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'cours' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
+                >
+                    <BookOpen className="w-4 h-4 mr-2 shrink-0" /> Résumé
+                </button>
+                <button 
+                    onClick={() => setActiveTab('labo')}
+                    className={`w-full sm:w-auto justify-center flex items-center px-4 py-3 sm:py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'labo' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
+                >
+                    <Activity className="w-4 h-4 mr-2 shrink-0" /> Laboratoire
+                </button>
+                <button 
+                    onClick={() => setActiveTab('quiz')}
+                    className={`w-full sm:w-auto justify-center flex items-center px-4 py-3 sm:py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'quiz' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
+                >
+                    <CheckCircle className="w-4 h-4 mr-2 shrink-0" /> QCM Rapide
+                </button>
+                <button 
+                    onClick={() => setActiveTab('exercices')}
+                    className={`w-full sm:w-auto justify-center flex items-center px-4 py-3 sm:py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'exercices' ? 'bg-orange-100 text-orange-800 border border-orange-200' : 'text-gray-600 hover:bg-gray-50'}`}
+                >
+                    <FileText className="w-4 h-4 mr-2 shrink-0" /> Exercices Corrigés
+                </button>
+                </div>
+
+                {/* Contenu Actif */}
+                <div className="transition-all duration-300">
+                {activeTab === 'cours' && (
+                    <div className="bg-white p-5 sm:p-8 rounded-xl shadow-sm border border-gray-100 max-w-3xl">
+                    <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 border-b pb-2">{currentModule.title}</h2>
+                    <div className="text-sm sm:text-base">
+                        {currentModule.summary}
+                    </div>
+                    </div>
+                )}
+
+                {activeTab === 'labo' && (
+                    <div className="animate-fadeIn">
+                    <div className="mb-4 sm:mb-6 max-w-3xl">
+                        <h2 className="text-xl sm:text-2xl font-bold mb-2">Comprendre et manipuler</h2>
+                        <p className="text-sm sm:text-base text-gray-600">Modifiez les paramètres pour observer les changements géométriques en temps réel.</p>
+                    </div>
+                    <LabComponent />
+                    </div>
+                )}
+
+                {activeTab === 'quiz' && (
+                    <div className="animate-fadeIn">
+                    <div className="mb-4 sm:mb-6 max-w-2xl mx-auto text-center">
+                        <h2 className="text-xl sm:text-2xl font-bold mb-2">Vérification des acquis</h2>
+                        <p className="text-sm sm:text-base text-gray-600">Appliquez les astuces vues en cours. Une explication s'affichera à chaque réponse.</p>
+                    </div>
+                    <Quiz questions={currentModule.quiz} />
+                    </div>
+                )}
+
+                {activeTab === 'exercices' && (
+                    <div className="animate-fadeIn max-w-3xl">
+                    <div className="mb-4 sm:mb-6">
+                        <h2 className="text-xl sm:text-2xl font-bold mb-2 flex items-center text-orange-800">
+                        <FileText className="w-5 h-5 sm:w-6 sm:h-6 mr-2 shrink-0" /> Exercices Types du Programme
+                        </h2>
+                        <p className="text-sm sm:text-base text-gray-600">
+                        Découvrez la correction détaillée, pas à pas, des exercices et activités incontournables du chapitre. Cliquez sur "Correction Pédagogique Détaillée" pour comprendre la méthode.
+                        </p>
+                    </div>
+                    <ExerciseViewer exercises={currentModule.exercises} />
+                    </div>
+                )}
+                </div>
+
+            </main>
+            </div>
+        );
+        }
+
+        // Lancement de l'application
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
